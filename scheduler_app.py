@@ -193,7 +193,7 @@ class Shift:
     start_minute: int
     end_hour: int
     end_minute: int
-    required_staff: int = 2
+    required_staff: int = 1
     assigned_users: List[str] = field(default_factory=list)
 
     def duration_minutes(self) -> int:
@@ -249,7 +249,7 @@ class Shift:
             start_minute=data.get('start_minute', 0),
             end_hour=data['end_hour'],
             end_minute=data.get('end_minute', 0),
-            required_staff=data.get('required_staff', 2),
+            required_staff=data.get('required_staff', 1),
             assigned_users=data.get('assigned_users', [])
         )
 
@@ -2299,16 +2299,16 @@ class ShiftDialog:
             textvariable=self.end_min_var, width=5, format="%02.0f"
         ).pack(side=tk.LEFT)
 
-        # Required Staff (minimum 2)
+        # Required Staff (minimum 1)
         ttk.Label(main_frame, text="Required Staff:").grid(
             row=5, column=0, sticky=tk.W, pady=5
         )
         self.staff_var = tk.IntVar(
-            value=self.shift.required_staff if self.shift else 2
+            value=self.shift.required_staff if self.shift else 1
         )
         staff_spin = ttk.Spinbox(
             main_frame,
-            from_=2,
+            from_=1,
             to=20,
             textvariable=self.staff_var,
             width=5
