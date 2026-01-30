@@ -2141,6 +2141,11 @@ class TimeRangeDialog:
         end_h = self.end_hour_var.get()
         end_m = self.end_min_var.get()
 
+        # Validate that 24:xx is only allowed with minute=0
+        if end_h == 24 and end_m != 0:
+            messagebox.showerror("Error", "End time of 24:00 cannot have non-zero minutes!")
+            return
+
         start_mins = start_h * 60 + start_m
         end_mins = end_h * 60 + end_m
 
@@ -2352,6 +2357,11 @@ class ShiftDialog:
         start_m = self.start_min_var.get()
         end_h = self.end_hour_var.get()
         end_m = self.end_min_var.get()
+
+        # Validate that 24:xx is only allowed with minute=0
+        if end_h == 24 and end_m != 0:
+            messagebox.showerror("Error", "End time of 24:00 cannot have non-zero minutes!")
+            return
 
         start_mins = start_h * 60 + start_m
         end_mins = end_h * 60 + end_m
