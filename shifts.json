@@ -1,0 +1,68 @@
+[
+  {
+    "id": "shift_1",
+    "name": "Morning Reception",
+    "shift_type": "fixed",
+    "day": 0,
+    "start_hour": 9,
+    "end_hour": 12,
+    "required_staff": 2,
+    "assigned_users": [
+      "Eve",
+      "Bob"
+    ]
+  },
+  {
+    "id": "shift_2",
+    "name": "Afternoon Support",
+    "shift_type": "fixed",
+    "day": 0,
+    "start_hour": 13,
+    "end_hour": 17,
+    "required_staff": 2,
+    "assigned_users": [
+      "Charlie",
+      "Diana"
+    ]
+  },
+  {
+    "id": "shift_3",
+    "name": "Team Meeting",
+    "shift_type": "flexible",
+    "day": 1,
+    "start_hour": 8,
+    "end_hour": 10,
+    "required_staff": 3,
+    "assigned_users": [
+      "Charlie",
+      "Diana",
+      "Alice"
+    ]
+  },
+  {
+    "id": "shift_4",
+    "name": "Training Session",
+    "shift_type": "flexible",
+    "day": 1,
+    "start_hour": 8,
+    "end_hour": 10,
+    "required_staff": 2,
+    "assigned_users": [
+      "Bob",
+      "Diana"
+    ]
+  },
+  {
+    "id": "shift_5",
+    "name": "Weekly Review",
+    "shift_type": "fixed",
+    "day": 4,
+    "start_hour": 15,
+    "end_hour": 17,
+    "required_staff": 2,
+    "assigned_users": [
+      "Alice",
+      "Eve"
+    ]
+  }
+]
