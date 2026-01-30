@@ -457,8 +457,9 @@ class Scheduler:
         Prioritizes users with fewer shifts to achieve equitable distribution.
         """
         # Keep existing assignments only if they respect all constraints
-        # (existence, no overlap, availability/max_shifts, and no conflicts).
-        available_users = set(self.get_available_users(shift, shifts_worked, all_shifts))
+        # (existence, no overlap, availability windows, and no conflicts).
+        # Note: We don't validate max_shifts_per_week here since the user may
+        # already be at their limit due to their existing assignments.
         valid_assigned = []
         for user in shift.assigned_users:
             if user not in self.users:
@@ -466,8 +467,13 @@ class Scheduler:
             # Verify user doesn't have overlapping shift already
             if self.check_user_overlap(user, shift, all_shifts):
                 continue
-            # Verify user is otherwise available (availability windows, max shifts, etc.)
-            if user not in available_users:
+            # Verify user has availability for this shift
+            user_obj = self.users[user]
+            if not user_obj.is_available(
+                shift.day,
+                shift.start_hour, shift.start_minute,
+                shift.end_hour, shift.end_minute
+            ):
                 continue
             # Ensure no conflict with already-preserved users on this shift
             if self.has_conflict(valid_assigned, user):
