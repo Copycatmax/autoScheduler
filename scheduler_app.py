@@ -4,10 +4,10 @@ A GUI application for managing user profiles, shifts, and automatic scheduling.
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog, filedialog
+from tkinter import ttk, messagebox, filedialog
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Set, Tuple, Optional
 from enum import Enum
@@ -822,8 +822,6 @@ class SchedulerApp:
 
     def _create_main_layout(self) -> None:
         """Create main application layout."""
-        theme = self.theme_manager.theme
-
         # Main container with padding
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.pack(fill=tk.BOTH, expand=True)
@@ -847,8 +845,6 @@ class SchedulerApp:
 
     def _create_users_panel(self, parent: ttk.Frame) -> None:
         """Create the users management panel."""
-        theme = self.theme_manager.theme
-
         # Header
         header_frame = ttk.Frame(parent)
         header_frame.pack(fill=tk.X, pady=(0, 5))
@@ -920,8 +916,6 @@ class SchedulerApp:
 
     def _create_shifts_panel(self, parent: ttk.Frame) -> None:
         """Create the shifts management panel."""
-        theme = self.theme_manager.theme
-
         # Header
         header_frame = ttk.Frame(parent)
         header_frame.pack(fill=tk.X, pady=(0, 5))
@@ -1000,8 +994,6 @@ class SchedulerApp:
 
     def _create_calendar_panel(self, parent: ttk.Frame) -> None:
         """Create the calendar view panel."""
-        theme = self.theme_manager.theme
-
         # Header with legend
         header_frame = ttk.Frame(parent)
         header_frame.pack(fill=tk.X, pady=(0, 10))
@@ -1057,16 +1049,6 @@ class SchedulerApp:
         # Bind resize and scroll events
         self.calendar_canvas.bind('<Configure>', self._on_canvas_resize)
         self.calendar_canvas.bind('<MouseWheel>', self._on_canvas_scroll)
-
-    def _find_overlapping_shifts(self) -> Set[str]:
-        """Find all shifts that overlap with another shift."""
-        overlapping = set()
-        for i, shift1 in enumerate(self.shifts):
-            for j, shift2 in enumerate(self.shifts):
-                if i < j and shift1.overlaps_with(shift2):
-                    overlapping.add(shift1.id)
-                    overlapping.add(shift2.id)
-        return overlapping
 
     def _group_overlapping_shifts(self, shifts: List[Shift]) -> List[List[Shift]]:
         """Group shifts that overlap with each other for side-by-side display."""
