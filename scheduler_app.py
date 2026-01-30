@@ -4,10 +4,10 @@ A GUI application for managing user profiles, shifts, and automatic scheduling.
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog, filedialog
+from tkinter import ttk, messagebox, filedialog
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Set, Tuple, Optional
 from enum import Enum
@@ -456,13 +456,29 @@ class Scheduler:
         Assign users to a single shift with load balancing.
         Prioritizes users with fewer shifts to achieve equitable distribution.
         """
-        # Keep existing valid assignments
+        # Keep existing assignments only if they respect all constraints
+        # (existence, no overlap, availability windows, and no conflicts).
+        # Note: We don't validate max_shifts_per_week here since the user may
+        # already be at their limit due to their existing assignments.
         valid_assigned = []
         for user in shift.assigned_users:
-            if user in self.users:
-                # Verify user doesn't have overlapping shift already
-                if not self.check_user_overlap(user, shift, all_shifts):
-                    valid_assigned.append(user)
+            if user not in self.users:
+                continue
+            # Verify user doesn't have overlapping shift already
+            if self.check_user_overlap(user, shift, all_shifts):
+                continue
+            # Verify user has availability for this shift
+            user_obj = self.users[user]
+            if not user_obj.is_available(
+                shift.day,
+                shift.start_hour, shift.start_minute,
+                shift.end_hour, shift.end_minute
+            ):
+                continue
+            # Ensure no conflict with already-preserved users on this shift
+            if self.has_conflict(valid_assigned, user):
+                continue
+            valid_assigned.append(user)
 
         shift.assigned_users = valid_assigned
 
@@ -534,16 +550,6 @@ class Scheduler:
                     test_shift.start_minute = start_minute
                     test_shift.end_hour = end_hour
                     test_shift.end_minute = end_minute
-
-                    # Check for overlap with other shifts
-                    has_overlap = False
-                    for other in all_shifts:
-                        if other.id != shift.id and test_shift.overlaps_with(other):
-                            has_overlap = True
-                            break
-
-                    if has_overlap:
-                        continue
 
                     # Count available users for this slot
                     available_count = 0
@@ -822,8 +828,6 @@ class SchedulerApp:
 
     def _create_main_layout(self) -> None:
         """Create main application layout."""
-        theme = self.theme_manager.theme
-
         # Main container with padding
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.pack(fill=tk.BOTH, expand=True)
@@ -847,8 +851,6 @@ class SchedulerApp:
 
     def _create_users_panel(self, parent: ttk.Frame) -> None:
         """Create the users management panel."""
-        theme = self.theme_manager.theme
-
         # Header
         header_frame = ttk.Frame(parent)
         header_frame.pack(fill=tk.X, pady=(0, 5))
@@ -920,8 +922,6 @@ class SchedulerApp:
 
     def _create_shifts_panel(self, parent: ttk.Frame) -> None:
         """Create the shifts management panel."""
-        theme = self.theme_manager.theme
-
         # Header
         header_frame = ttk.Frame(parent)
         header_frame.pack(fill=tk.X, pady=(0, 5))
@@ -1000,8 +1000,6 @@ class SchedulerApp:
 
     def _create_calendar_panel(self, parent: ttk.Frame) -> None:
         """Create the calendar view panel."""
-        theme = self.theme_manager.theme
-
         # Header with legend
         header_frame = ttk.Frame(parent)
         header_frame.pack(fill=tk.X, pady=(0, 10))
@@ -1057,16 +1055,6 @@ class SchedulerApp:
         # Bind resize and scroll events
         self.calendar_canvas.bind('<Configure>', self._on_canvas_resize)
         self.calendar_canvas.bind('<MouseWheel>', self._on_canvas_scroll)
-
-    def _find_overlapping_shifts(self) -> Set[str]:
-        """Find all shifts that overlap with another shift."""
-        overlapping = set()
-        for i, shift1 in enumerate(self.shifts):
-            for j, shift2 in enumerate(self.shifts):
-                if i < j and shift1.overlaps_with(shift2):
-                    overlapping.add(shift1.id)
-                    overlapping.add(shift2.id)
-        return overlapping
 
     def _group_overlapping_shifts(self, shifts: List[Shift]) -> List[List[Shift]]:
         """Group shifts that overlap with each other for side-by-side display."""
@@ -2144,6 +2132,11 @@ class TimeRangeDialog:
         start_mins = start_h * 60 + start_m
         end_mins = end_h * 60 + end_m
 
+        # Disallow end times beyond 24:00 (e.g., 24:30)
+        if end_mins > 24 * 60:
+            messagebox.showerror("Error", "End time cannot be after 24:00!")
+            return
+
         if end_mins <= start_mins:
             messagebox.showerror("Error", "End time must be after start time!")
             return
@@ -2356,6 +2349,11 @@ class ShiftDialog:
         start_mins = start_h * 60 + start_m
         end_mins = end_h * 60 + end_m
 
+        # Disallow end times beyond 24:00 (e.g., 24:30)
+        if end_mins > 24 * 60:
+            messagebox.showerror("Error", "End time cannot be after 24:00!")
+            return
+
         if end_mins <= start_mins:
             messagebox.showerror("Error", "End time must be after start time!")
             return
@@ -2540,17 +2538,18 @@ class AssignUsersDialog:
                     )
                     return
 
-        # Warn about overlaps
+        # Block overlaps (no double-booking)
         overlapping_users = [
             name for name in assigned if self._check_user_overlap(name)
         ]
         if overlapping_users:
-            if not messagebox.askyesno(
-                "Warning",
-                f"The following users have overlapping shifts: "
-                f"{', '.join(overlapping_users)}\n\nAssign anyway?"
-            ):
-                return
+            messagebox.showerror(
+                "Overlap Detected",
+                "The following users are already scheduled on overlapping "
+                f"shifts and cannot be assigned to this shift:\n\n"
+                f"{', '.join(overlapping_users)}"
+            )
+            return
 
         self.result = assigned
         self.dialog.destroy()
