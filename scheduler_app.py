@@ -1741,7 +1741,7 @@ class SchedulerApp:
         """Show about dialog."""
         messagebox.showinfo(
             "About AutoSchedule",
-            "AutoSchedule v2.0\n\n"
+            "AutoSchedule v1.1.0\n\n"
             "Automatic Shift Scheduling Application\n\n"
             "Features:\n"
             "• User profile management with minute-level availability\n"
