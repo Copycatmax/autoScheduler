@@ -456,13 +456,23 @@ class Scheduler:
         Assign users to a single shift with load balancing.
         Prioritizes users with fewer shifts to achieve equitable distribution.
         """
-        # Keep existing valid assignments
+        # Keep existing assignments only if they respect all constraints
+        # (existence, no overlap, availability/max_shifts, and no conflicts).
+        available_users = set(self.get_available_users(shift, shifts_worked, all_shifts))
         valid_assigned = []
         for user in shift.assigned_users:
-            if user in self.users:
-                # Verify user doesn't have overlapping shift already
-                if not self.check_user_overlap(user, shift, all_shifts):
-                    valid_assigned.append(user)
+            if user not in self.users:
+                continue
+            # Verify user doesn't have overlapping shift already
+            if self.check_user_overlap(user, shift, all_shifts):
+                continue
+            # Verify user is otherwise available (availability windows, max shifts, etc.)
+            if user not in available_users:
+                continue
+            # Ensure no conflict with already-preserved users on this shift
+            if self.has_conflict(valid_assigned, user):
+                continue
+            valid_assigned.append(user)
 
         shift.assigned_users = valid_assigned
 
@@ -534,16 +544,6 @@ class Scheduler:
                     test_shift.start_minute = start_minute
                     test_shift.end_hour = end_hour
                     test_shift.end_minute = end_minute
-
-                    # Check for overlap with other shifts
-                    has_overlap = False
-                    for other in all_shifts:
-                        if other.id != shift.id and test_shift.overlaps_with(other):
-                            has_overlap = True
-                            break
-
-                    if has_overlap:
-                        continue
 
                     # Count available users for this slot
                     available_count = 0
@@ -2126,6 +2126,11 @@ class TimeRangeDialog:
         start_mins = start_h * 60 + start_m
         end_mins = end_h * 60 + end_m
 
+        # Disallow end times beyond 24:00 (e.g., 24:30)
+        if end_mins > 24 * 60:
+            messagebox.showerror("Error", "End time cannot be after 24:00!")
+            return
+
         if end_mins <= start_mins:
             messagebox.showerror("Error", "End time must be after start time!")
             return
@@ -2338,6 +2343,11 @@ class ShiftDialog:
         start_mins = start_h * 60 + start_m
         end_mins = end_h * 60 + end_m
 
+        # Disallow end times beyond 24:00 (e.g., 24:30)
+        if end_mins > 24 * 60:
+            messagebox.showerror("Error", "End time cannot be after 24:00!")
+            return
+
         if end_mins <= start_mins:
             messagebox.showerror("Error", "End time must be after start time!")
             return
@@ -2522,17 +2532,18 @@ class AssignUsersDialog:
                     )
                     return
 
-        # Warn about overlaps
+        # Block overlaps (no double-booking)
         overlapping_users = [
             name for name in assigned if self._check_user_overlap(name)
         ]
         if overlapping_users:
-            if not messagebox.askyesno(
-                "Warning",
-                f"The following users have overlapping shifts: "
-                f"{', '.join(overlapping_users)}\n\nAssign anyway?"
-            ):
-                return
+            messagebox.showerror(
+                "Overlap Detected",
+                "The following users are already scheduled on overlapping "
+                f"shifts and cannot be assigned to this shift:\n\n"
+                f"{', '.join(overlapping_users)}"
+            )
+            return
 
         self.result = assigned
         self.dialog.destroy()
