@@ -832,7 +832,6 @@ class SchedulerApp:
 
     def _create_main_layout(self) -> None:
         """Create main application layout."""
-        theme = self.theme_manager.theme
 
         # Main container with padding
         self.main_frame = ttk.Frame(self.root, padding="10")
