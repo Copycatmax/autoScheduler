@@ -4,7 +4,7 @@ A GUI application for managing user profiles, shifts, and automatic scheduling.
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog, filedialog
+from tkinter import ttk, messagebox, filedialog
 import json
 import os
 from datetime import datetime
