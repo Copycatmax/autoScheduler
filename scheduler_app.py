@@ -2540,17 +2540,18 @@ class AssignUsersDialog:
                     )
                     return
 
-        # Warn about overlaps
+        # Block overlaps (no double-booking)
         overlapping_users = [
             name for name in assigned if self._check_user_overlap(name)
         ]
         if overlapping_users:
-            if not messagebox.askyesno(
-                "Warning",
-                f"The following users have overlapping shifts: "
-                f"{', '.join(overlapping_users)}\n\nAssign anyway?"
-            ):
-                return
+            messagebox.showerror(
+                "Overlap Detected",
+                "The following users are already scheduled on overlapping "
+                f"shifts and cannot be assigned to this shift:\n\n"
+                f"{', '.join(overlapping_users)}"
+            )
+            return
 
         self.result = assigned
         self.dialog.destroy()
