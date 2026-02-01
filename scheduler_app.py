@@ -7,7 +7,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, filedialog
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Set, Tuple, Optional
 from enum import Enum
