@@ -456,13 +456,23 @@ class Scheduler:
         Assign users to a single shift with load balancing.
         Prioritizes users with fewer shifts to achieve equitable distribution.
         """
-        # Keep existing valid assignments
+        # Keep existing assignments only if they respect all constraints
+        # (existence, no overlap, availability/max_shifts, and no conflicts).
+        available_users = set(self.get_available_users(shift, shifts_worked, all_shifts))
         valid_assigned = []
         for user in shift.assigned_users:
-            if user in self.users:
-                # Verify user doesn't have overlapping shift already
-                if not self.check_user_overlap(user, shift, all_shifts):
-                    valid_assigned.append(user)
+            if user not in self.users:
+                continue
+            # Verify user doesn't have overlapping shift already
+            if self.check_user_overlap(user, shift, all_shifts):
+                continue
+            # Verify user is otherwise available (availability windows, max shifts, etc.)
+            if user not in available_users:
+                continue
+            # Ensure no conflict with already-preserved users on this shift
+            if self.has_conflict(valid_assigned, user):
+                continue
+            valid_assigned.append(user)
 
         shift.assigned_users = valid_assigned
 
