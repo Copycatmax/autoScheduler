@@ -1058,16 +1058,6 @@ class SchedulerApp:
         self.calendar_canvas.bind('<Configure>', self._on_canvas_resize)
         self.calendar_canvas.bind('<MouseWheel>', self._on_canvas_scroll)
 
-    def _find_overlapping_shifts(self) -> Set[str]:
-        """Find all shifts that overlap with another shift."""
-        overlapping = set()
-        for i, shift1 in enumerate(self.shifts):
-            for j, shift2 in enumerate(self.shifts):
-                if i < j and shift1.overlaps_with(shift2):
-                    overlapping.add(shift1.id)
-                    overlapping.add(shift2.id)
-        return overlapping
-
     def _group_overlapping_shifts(self, shifts: List[Shift]) -> List[List[Shift]]:
         """Group shifts that overlap with each other for side-by-side display."""
         if not shifts:
